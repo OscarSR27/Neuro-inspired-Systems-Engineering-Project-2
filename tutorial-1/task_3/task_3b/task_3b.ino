@@ -1,8 +1,9 @@
 #define DESCRIPTION_LENGTH     15
-#define NUMBER_MATSUOKA_NEURONS     3
+#define NUMBER_MATSUOKA_NEURONS     2
 #define ARRAY_LENGTH(array) (sizeof(array) / sizeof((array)[0]))
 unsigned long int myTime;
 unsigned int mydelay = 10; // ms
+unsigned int start_simulation = 1000; // ms
 /******************************************************/ 
 /*  
  *  Matsuoka model
@@ -21,7 +22,7 @@ struct matsuokaNeuron {
    double x_i = 0;
    double a[NUMBER_MATSUOKA_NEURONS];
    double y_j[NUMBER_MATSUOKA_NEURONS];  
-   double s_i = 0; //External stimulus/current
+   double s_i = 1; //External stimulus/current, must be positive and constant
    double x_prime = 0; 
    double y_i = 0; 
 } matsuoka_neuron[NUMBER_MATSUOKA_NEURONS]; 
@@ -34,7 +35,6 @@ struct Pattern{
   double b;
   double T;
   double a[NUMBER_MATSUOKA_NEURONS];
-  int stimulation_time;
   };
 /******************************************************/ 
 //Parameter Configuration: Use the following array to define the settings for each neuron.
@@ -44,10 +44,9 @@ struct Pattern{
 // Ensure that the number of entries in the 'a' array matches the number of neurons.
 Pattern patterns[NUMBER_MATSUOKA_NEURONS] = 
 {
-  /*Description    tao   b        T         a     stimulation time*/
-  {"First neuron",  1,   0,       1,     {0,0,0}, 5000},//NO_ADAPTATION: b=0
-  {"Second neuron", 1,   2.5,     12,    {0,0,0}, 5000},//TONIC: b=2.5, T=12
-  {"Third neuron",  1,   2.5e100, 12e100,{0,0,0}, 5000} //PHASIC: b large, T large
+  /*Description    tao   b        T             a    */
+  {"First neuron",  1,   2.5,     6,     { 0,   2.5}}, //TONIC: b=2.5, T=12
+  {"Second neuron", 1,   2.5,     6,     {2.5,   0 }},//TONIC: b=2.5, T=12
 };
 
 /******************************************************/ 
@@ -174,21 +173,19 @@ void loop() {
   /* Read my program running time in milliseconds */
   myTime = millis();
 
-  for (int i = 0; i< NUMBER_MATSUOKA_NEURONS ; i++)
+  /* Introduce a perturbation to the system to start the oscillation */
+  if (myTime > start_simulation && myTime < start_simulation + 100)
   {
-    if (myTime > patterns[i].stimulation_time)
-    {
-      matsuoka_neuron[i].s_i = 1;
-    }
+    matsuoka_neuron[0].x_i = 0.5;
   }
 
   /* Update the neurons output*/
   update_locomotion_network();
-  
+
   /* Printing the output of the neurons on serial port*/
   for (int i = 0; i< NUMBER_MATSUOKA_NEURONS ; i++)
   {
-    Serial.print(matsuoka_neuron[i].y_i);Serial.print(" ");
+    Serial.print(matsuoka_neuron[i].y_i);Serial.print(",");
   }
   
   Serial.print("\n");
