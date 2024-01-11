@@ -3,6 +3,7 @@
 #define ARRAY_LENGTH(array) (sizeof(array) / sizeof((array)[0]))
 unsigned long int myTime;
 unsigned int mydelay = 10; // ms
+unsigned int start_simulation = 1000; // ms
 /******************************************************/ 
 /*  
  *  Matsuoka model
@@ -21,7 +22,7 @@ struct matsuokaNeuron {
    double x_i = 0;
    double a[NUMBER_MATSUOKA_NEURONS];
    double y_j[NUMBER_MATSUOKA_NEURONS];  
-   double s_i = 0; //External stimulus/current
+   double s_i = 1; //External stimulus/current, must be constant
    double x_prime = 0; 
    double y_i = 0; 
 } matsuoka_neuron[NUMBER_MATSUOKA_NEURONS]; 
@@ -34,7 +35,6 @@ struct Pattern{
   double b;
   double T;
   double a[NUMBER_MATSUOKA_NEURONS];
-  int stimulation_time;
   };
 /******************************************************/ 
 //Parameter Configuration: Use the following array to define the settings for each neuron.
@@ -43,46 +43,56 @@ struct Pattern{
 // Ensure that the number of entries in the patterns array matches the number of neurons.
 // Ensure that the number of entries in the 'a' array matches the number of neurons.
 
-// Hypotheses (Ijspeert 2007):
-// 1. Body CPG spontaneously produces travelling waves, limb CPG forces walking mode
-// 2. Coupling strengths limb-body > body-body
-// 3. Limb oscillators cannot oscillate at high frequencies
-// 4. Intrinsic frequencies body > limb (same drive) => larger tao for limb neurons
-
-// Configuration (Ijspeert 2007):
-// Body CPG: 16 oscillators, double chain, nearest neighbour coupling
-// Limb CPG: 4 oscillators, unidirectional coupling limb-body
-// low level of stimulation: walking, higher stimulation: swimming
-
-// coupling strengths
-double bb = 1.5;
-double lb = 2.5;
-double ll = lb;
+// coupling strength
+double cs = 2.5;
 Pattern patterns[NUMBER_MATSUOKA_NEURONS] = 
 {
-  /*Description   tao   b      T                            a                          stimulation time*/
-  // Body neurons
-  {"Neuron-B01",  1,   2.5,   12,     {0,bb,0,0,0,0,0,0,bb,0,0,0,0,0,0,0,0,0,0,0},     2000},
-  {"Neuron-B02",  1,   2.5,   12,     {bb,0,bb,0,0,0,0,0,0,bb,0,0,0,0,0,0,0,0,0,0},    2000},
-  {"Neuron-B03",  1,   2.5,   12,     {0,bb,0,bb,0,0,0,0,0,0,bb,0,0,0,0,0,0,0,0,0},    2000},
-  {"Neuron-B04",  1,   2.5,   12,     {0,0,bb,0,bb,0,0,0,0,0,0,bb,0,0,0,0,0,0,0,0},    2000},
-  {"Neuron-B05",  1,   2.5,   12,     {0,0,0,bb,0,bb,0,0,0,0,0,0,bb,0,0,0,0,0,0,0},    2000},
-  {"Neuron-B06",  1,   2.5,   12,     {0,0,0,0,bb,0,bb,0,0,0,0,0,0,bb,0,0,0,0,0,0},    2000},
-  {"Neuron-B07",  1,   2.5,   12,     {0,0,0,0,0,bb,0,bb,0,0,0,0,0,0,bb,0,0,0,0,0},    2000},
-  {"Neuron-B08",  1,   2.5,   12,     {0,0,0,0,0,0,bb,0,0,0,0,0,0,0,0,bb,0,0,0,0},     2000},
-  {"Neuron-B09",  1,   2.5,   12,     {bb,0,0,0,0,0,0,0,0,bb,0,0,0,0,0,0,0,0,0,0},     2000},
-  {"Neuron-B10",  1,   2.5,   12,     {0,bb,0,0,0,0,0,0,bb,0,bb,0,0,0,0,0,0,0,0,0},    2000},
-  {"Neuron-B11",  1,   2.5,   12,     {0,0,bb,0,0,0,0,0,0,bb,0,bb,0,0,0,0,0,0,0,0},    2000},
-  {"Neuron-B12",  1,   2.5,   12,     {0,0,0,bb,0,0,0,0,0,0,bb,0,bb,0,0,0,0,0,0,0},    2000},
-  {"Neuron-B13",  1,   2.5,   12,     {0,0,0,0,bb,0,0,0,0,0,0,bb,0,bb,0,0,0,0,0,0},    2000},
-  {"Neuron-B14",  1,   2.5,   12,     {0,0,0,0,0,bb,0,0,0,0,0,0,bb,0,bb,0,0,0,0,0},    2000},
-  {"Neuron-B15",  1,   2.5,   12,     {0,0,0,0,0,0,bb,0,0,0,0,0,0,bb,0,bb,0,0,0,0},    2000},
-  {"Neuron-B16",  1,   2.5,   12,     {0,0,0,0,0,0,0,bb,0,0,0,0,0,0,bb,0,0,0,0,0},     2000},
-  // Limb neurons
-  {"Neuron-L17",  1,   2.5,   12,     {lb,lb,lb,lb,0,0,0,0,0,0,0,0,0,0,0,0,0,ll,ll,0}, 2000},
-  {"Neuron-L18",  1,   2.5,   12,     {0,0,0,0,0,0,0,0,lb,lb,lb,lb,0,0,0,0,ll,0,0,ll}, 2000},
-  {"Neuron-L19",  1,   2.5,   12,     {0,0,0,0,lb,lb,lb,lb,0,0,0,0,0,0,0,0,ll,0,0,ll}, 2000},
-  {"Neuron-L20",  1,   2.5,   12,     {0,0,0,0,0,0,0,0,0,0,0,0,lb,lb,lb,lb,0,ll,ll,0}, 2000},
+  /*Description   tao   b      T                            a                        */
+  {"Neuron-01",  1,   2.5,   6,     {0,cs,0,0,0,0,0,0,0,0,cs,0,0,0,0,0,0,0,0,0} },
+  {"Neuron-02",  1,   2.5,   6,     {cs,0,cs,0,0,0,0,0,0,0,0,cs,0,0,0,0,0,0,0,0} },
+  {"Neuron-03",  1,   2.5,   6,     {0,cs,0,cs,0,0,0,0,0,0,0,0,cs,0,0,0,0,0,0,0} },
+  {"Neuron-04",  1,   2.5,   6,     {0,0,cs,0,cs,0,0,0,0,0,0,0,0,cs,0,0,0,0,0,0} },
+  {"Neuron-05",  1,   2.5,   6,     {0,0,0,cs,0,cs,0,0,0,0,0,0,0,0,cs,0,0,0,0,0} },
+  {"Neuron-06",  1,   2.5,   6,     {0,0,0,0,cs,0,cs,0,0,0,0,0,0,0,0,cs,0,0,0,0} },
+  {"Neuron-07",  1,   2.5,   6,     {0,0,0,0,0,cs,0,cs,0,0,0,0,0,0,0,0,cs,0,0,0} },
+  {"Neuron-08",  1,   2.5,   6,     {0,0,0,0,0,0,cs,0,cs,0,0,0,0,0,0,0,0,cs,0,0} },
+  {"Neuron-09",  1,   2.5,   6,     {0,0,0,0,0,0,0,cs,0,cs,0,0,0,0,0,0,0,0,cs,0} },
+  {"Neuron-10",  1,   2.5,   6,     {0,0,0,0,0,0,0,0,cs,0,0,0,0,0,0,0,0,0,0,cs} },
+  {"Neuron-11",  1,   2.5,   6,     {cs,0,0,0,0,0,0,0,0,0,0,cs,0,0,0,0,0,0,0,0} },
+  {"Neuron-12",  1,   2.5,   6,     {0,cs,0,0,0,0,0,0,0,0,cs,0,cs,0,0,0,0,0,0,0} },
+  {"Neuron-13",  1,   2.5,   6,     {0,0,cs,0,0,0,0,0,0,0,0,cs,0,cs,0,0,0,0,0,0} },
+  {"Neuron-14",  1,   2.5,   6,     {0,0,0,cs,0,0,0,0,0,0,0,0,cs,0,cs,0,0,0,0,0} },
+  {"Neuron-15",  1,   2.5,   6,     {0,0,0,0,cs,0,0,0,0,0,0,0,0,cs,0,cs,0,0,0,0} },
+  {"Neuron-16",  1,   2.5,   6,     {0,0,0,0,0,cs,0,0,0,0,0,0,0,0,cs,0,cs,0,0,0} },
+  {"Neuron-17",  1,   2.5,   6,     {0,0,0,0,0,0,cs,0,0,0,0,0,0,0,0,cs,0,cs,0,0} },
+  {"Neuron-18",  1,   2.5,   6,     {0,0,0,0,0,0,0,cs,0,0,0,0,0,0,0,0,cs,0,cs,0} },
+  {"Neuron-19",  1,   2.5,   6,     {0,0,0,0,0,0,0,0,cs,0,0,0,0,0,0,0,0,cs,0,cs} },
+  {"Neuron-20",  1,   2.5,   6,     {0,0,0,0,0,0,0,0,0,cs,0,0,0,0,0,0,0,0,cs,0} },
+};
+
+Pattern patterns2[NUMBER_MATSUOKA_NEURONS] = 
+{
+  /*Description   tao   b      T                            a                        */
+  {"Neuron-01",  1,   2.5,   6,     {0,cs,0,0,0,0,0,0,0,0,cs,cs,0,0,0,0,0,0,0,0} },
+  {"Neuron-02",  1,   2.5,   6,     {cs,0,cs,0,0,0,0,0,0,0,cs,cs,cs,0,0,0,0,0,0,0} },
+  {"Neuron-03",  1,   2.5,   6,     {0,cs,0,cs,0,0,0,0,0,0,0,cs,cs,cs,0,0,0,0,0,0} },
+  {"Neuron-04",  1,   2.5,   6,     {0,0,cs,0,cs,0,0,0,0,0,0,0,cs,cs,cs,0,0,0,0,0} },
+  {"Neuron-05",  1,   2.5,   6,     {0,0,0,cs,0,cs,0,0,0,0,0,0,0,cs,cs,cs,0,0,0,0} },
+  {"Neuron-06",  1,   2.5,   6,     {0,0,0,0,cs,0,cs,0,0,0,0,0,0,0,cs,cs,cs,0,0,0} },
+  {"Neuron-07",  1,   2.5,   6,     {0,0,0,0,0,cs,0,cs,0,0,0,0,0,0,0,cs,cs,cs,0,0} },
+  {"Neuron-08",  1,   2.5,   6,     {0,0,0,0,0,0,cs,0,cs,0,0,0,0,0,0,0,cs,cs,cs,0} },
+  {"Neuron-09",  1,   2.5,   6,     {0,0,0,0,0,0,0,cs,0,cs,0,0,0,0,0,0,0,cs,cs,cs} },
+  {"Neuron-10",  1,   2.5,   6,     {0,0,0,0,0,0,0,0,cs,0,0,0,0,0,0,0,0,0,cs,cs} },
+  {"Neuron-11",  1,   2.5,   6,     {cs,cs,0,0,0,0,0,0,0,0,0,cs,0,0,0,0,0,0,0,0} },
+  {"Neuron-12",  1,   2.5,   6,     {cs,cs,cs,0,0,0,0,0,0,0,cs,0,cs,0,0,0,0,0,0,0} },
+  {"Neuron-13",  1,   2.5,   6,     {0,cs,cs,cs,0,0,0,0,0,0,0,cs,0,cs,0,0,0,0,0,0} },
+  {"Neuron-14",  1,   2.5,   6,     {0,0,cs,cs,cs,0,0,0,0,0,0,0,cs,0,cs,0,0,0,0,0} },
+  {"Neuron-15",  1,   2.5,   6,     {0,0,0,cs,cs,cs,0,0,0,0,0,0,0,cs,0,cs,0,0,0,0} },
+  {"Neuron-16",  1,   2.5,   6,     {0,0,0,0,cs,cs,cs,0,0,0,0,0,0,0,cs,0,cs,0,0,0} },
+  {"Neuron-17",  1,   2.5,   6,     {0,0,0,0,0,cs,cs,cs,0,0,0,0,0,0,0,cs,0,cs,0,0} },
+  {"Neuron-18",  1,   2.5,   6,     {0,0,0,0,0,0,cs,cs,cs,0,0,0,0,0,0,0,cs,0,cs,0} },
+  {"Neuron-19",  1,   2.5,   6,     {0,0,0,0,0,0,0,cs,cs,cs,0,0,0,0,0,0,0,cs,0,cs} },
+  {"Neuron-20",  1,   2.5,   6,     {0,0,0,0,0,0,0,0,cs,cs,0,0,0,0,0,0,0,0,cs,0} },
 };
 
 /******************************************************/ 
@@ -196,7 +206,7 @@ void setup()
   /* set the configuration of the MATSUOKA neuron to match a desired output: NO_ADAPTATION, TONIC, PHASIC */
   for (int i = 0; i < NUMBER_MATSUOKA_NEURONS; i++)
   {
-    setup_matsuoka_neuron(&matsuoka_neuron[i],patterns[i],patterns[i].str);
+    setup_matsuoka_neuron(&matsuoka_neuron[i],patterns2[i],patterns2[i].str);
   }
 }
 
@@ -209,12 +219,10 @@ void loop() {
   /* Read my program running time in milliseconds */
   myTime = millis();
 
-  for (int i = 0; i< NUMBER_MATSUOKA_NEURONS ; i++)
+  /* Introduce a perturbation to the system to start the oscillation */
+  if (myTime > start_simulation && myTime < start_simulation + 100)
   {
-    if (myTime > patterns[i].stimulation_time)
-    {
-      matsuoka_neuron[i].s_i = 1;
-    }
+    matsuoka_neuron[0].x_i = 0.5;
   }
 
   /* Update the neurons output*/
@@ -231,4 +239,3 @@ void loop() {
   /* delay at the end */
   delay(mydelay);
 }
-
