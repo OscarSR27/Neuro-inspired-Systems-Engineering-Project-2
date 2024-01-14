@@ -1,4 +1,4 @@
-Neuron_example,Neuron_example_lower_tau,Second_neuron,
+Neuron_example,Neuron_1,Neuron_2,
 0.00,0.00,0.00,
 0.00,0.00,0.00,
 0.00,0.00,0.00,
