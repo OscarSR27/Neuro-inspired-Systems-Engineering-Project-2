@@ -1,5 +1,5 @@
 #define DESCRIPTION_LENGTH     15
-#define NUMBER_MATSUOKA_NEURONS     3
+#define NUMBER_MATSUOKA_NEURONS     4
 #define ARRAY_LENGTH(array) (sizeof(array) / sizeof((array)[0]))
 unsigned long int myTime;
 unsigned int mydelay = 10; // ms
@@ -42,13 +42,22 @@ struct Pattern{
 
 // Ensure that the number of entries in the patterns array matches the number of neurons.
 // Ensure that the number of entries in the 'a' array matches the number of neurons.
+
+// For case 1, a1=2.5 and a2=a3=0
+// For case 2, a1=a2=1.5 and a3=0
+// For case 3, a1=a3=1.5 and a2=0
+// For case 4, a1=a2=a3=2.5 
+double a1 = 2.5;
+double a2 = 0;
+double a3 = 0;
+
 Pattern patterns[NUMBER_MATSUOKA_NEURONS] = 
 {
-  /*Description    tao   b        T             a    */
-  {"First neuron",  1,   2.5,     6,     { 0,     0,    2.5}}, //TONIC: b=2.5, T=12
-  {"Second neuron", 1,   2.5,     6,     {2.5,    0,     0 }}, //TONIC: b=2.5, T=12
-  {"Third neuron",  1,   2.5,     6,     { 0,    2.5,    0 }}, //TONIC: b=2.5, T=12
-  // For the network confirguration where every neuron is connected to all other neurons, make all non-diagonal 'a' values non-zero (2.5)
+  /*Description     tao    b       T             a        */
+  {"First neuron",   1,   2.5,     6,     {0, a1, a2, a3}}, //TONIC: b=2.5, T=12
+  {"Second neuron",  1,   2.5,     6,     {a3, 0, a1, a2}}, //TONIC: b=2.5, T=12
+  {"Third neuron",   1,   2.5,     6,     {a2, a3, 0, a1}}, //TONIC: b=2.5, T=12
+  {"Fourth neuron",  1,   2.5,     6,     {a1, a2, a3, 0}}, //TONIC: b=2.5, T=12
 };
 
 /******************************************************/ 
@@ -178,8 +187,10 @@ void loop() {
   /* Introduce a perturbation to the system to start the oscillation */
   if (myTime > start_simulation && myTime < start_simulation + 100)
   {
+    // For case 1, one input current. For case 2 and 3, two inputs. For case 4, three inputs.
     matsuoka_neuron[0].x_i = 0.01;
-    //matsuoka_neuron[1].x_i = 0.02;  // For the network confirguration where every neuron is connected to all other neurons, inject this current to second neuron
+    //matsuoka_neuron[1].x_i = 0.02;
+    //matsuoka_neuron[2].x_i = 0.03;
   }
 
   /* Update the neurons output*/
@@ -196,3 +207,4 @@ void loop() {
   /* delay at the end */
   delay(mydelay);
 }
+
