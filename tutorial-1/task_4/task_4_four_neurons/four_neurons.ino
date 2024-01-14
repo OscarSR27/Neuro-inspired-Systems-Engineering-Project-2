@@ -54,10 +54,10 @@ double a3 = 0;
 Pattern patterns[NUMBER_MATSUOKA_NEURONS] = 
 {
   /*Description     tao    b       T             a        */
-  {"First neuron",   1,   2.5,     6,     {0, a1, a2, a3}}, //TONIC: b=2.5, T=12
-  {"Second neuron",  1,   2.5,     6,     {a3, 0, a1, a2}}, //TONIC: b=2.5, T=12
-  {"Third neuron",   1,   2.5,     6,     {a2, a3, 0, a1}}, //TONIC: b=2.5, T=12
-  {"Fourth neuron",  1,   2.5,     6,     {a1, a2, a3, 0}}, //TONIC: b=2.5, T=12
+  {"First neuron",   1,   2.5,     12,     {0, a1, a2, a3}}, //TONIC: b=2.5, T=12
+  {"Second neuron",  1,   2.5,     12,     {a3, 0, a1, a2}}, //TONIC: b=2.5, T=12
+  {"Third neuron",   1,   2.5,     12,     {a2, a3, 0, a1}}, //TONIC: b=2.5, T=12
+  {"Fourth neuron",  1,   2.5,     12,     {a1, a2, a3, 0}}, //TONIC: b=2.5, T=12
 };
 
 /******************************************************/ 
