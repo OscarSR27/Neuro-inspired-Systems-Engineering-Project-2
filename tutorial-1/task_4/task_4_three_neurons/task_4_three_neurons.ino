@@ -1,8 +1,9 @@
 #define DESCRIPTION_LENGTH     15
-#define NUMBER_MATSUOKA_NEURONS     20
+#define NUMBER_MATSUOKA_NEURONS     3
 #define ARRAY_LENGTH(array) (sizeof(array) / sizeof((array)[0]))
 unsigned long int myTime;
 unsigned int mydelay = 10; // ms
+unsigned int start_simulation = 1000; // ms
 /******************************************************/ 
 /*  
  *  Matsuoka model
@@ -21,7 +22,7 @@ struct matsuokaNeuron {
    double x_i = 0;
    double a[NUMBER_MATSUOKA_NEURONS];
    double y_j[NUMBER_MATSUOKA_NEURONS];  
-   double s_i = 0; //External stimulus/current
+   double s_i = 1; //External stimulus/current, must be positive and constant
    double x_prime = 0; 
    double y_i = 0; 
 } matsuoka_neuron[NUMBER_MATSUOKA_NEURONS]; 
@@ -34,7 +35,6 @@ struct Pattern{
   double b;
   double T;
   double a[NUMBER_MATSUOKA_NEURONS];
-  int stimulation_time;
   };
 /******************************************************/ 
 //Parameter Configuration: Use the following array to define the settings for each neuron.
@@ -42,47 +42,13 @@ struct Pattern{
 
 // Ensure that the number of entries in the patterns array matches the number of neurons.
 // Ensure that the number of entries in the 'a' array matches the number of neurons.
-
-// Hypotheses (Ijspeert 2007):
-// 1. Body CPG spontaneously produces travelling waves, limb CPG forces walking mode
-// 2. Coupling strengths limb-body > body-body
-// 3. Limb oscillators cannot oscillate at high frequencies
-// 4. Intrinsic frequencies body > limb (same drive) => larger tao for limb neurons
-
-// Configuration (Ijspeert 2007):
-// Body CPG: 16 oscillators, double chain, nearest neighbour coupling
-// Limb CPG: 4 oscillators, unidirectional coupling limb-body
-// low level of stimulation: walking, higher stimulation: swimming
-
-// coupling strengths
-double bb = 1.5;
-double lb = 2.5;
-double ll = lb;
 Pattern patterns[NUMBER_MATSUOKA_NEURONS] = 
 {
-  /*Description   tao   b      T                            a                          stimulation time*/
-  // Body neurons
-  {"Neuron-B01",  1,   2.5,   12,     {0,bb,0,0,0,0,0,0,bb,0,0,0,0,0,0,0,0,0,0,0},     2000},
-  {"Neuron-B02",  1,   2.5,   12,     {bb,0,bb,0,0,0,0,0,0,bb,0,0,0,0,0,0,0,0,0,0},    2000},
-  {"Neuron-B03",  1,   2.5,   12,     {0,bb,0,bb,0,0,0,0,0,0,bb,0,0,0,0,0,0,0,0,0},    2000},
-  {"Neuron-B04",  1,   2.5,   12,     {0,0,bb,0,bb,0,0,0,0,0,0,bb,0,0,0,0,0,0,0,0},    2000},
-  {"Neuron-B05",  1,   2.5,   12,     {0,0,0,bb,0,bb,0,0,0,0,0,0,bb,0,0,0,0,0,0,0},    2000},
-  {"Neuron-B06",  1,   2.5,   12,     {0,0,0,0,bb,0,bb,0,0,0,0,0,0,bb,0,0,0,0,0,0},    2000},
-  {"Neuron-B07",  1,   2.5,   12,     {0,0,0,0,0,bb,0,bb,0,0,0,0,0,0,bb,0,0,0,0,0},    2000},
-  {"Neuron-B08",  1,   2.5,   12,     {0,0,0,0,0,0,bb,0,0,0,0,0,0,0,0,bb,0,0,0,0},     2000},
-  {"Neuron-B09",  1,   2.5,   12,     {bb,0,0,0,0,0,0,0,0,bb,0,0,0,0,0,0,0,0,0,0},     2000},
-  {"Neuron-B10",  1,   2.5,   12,     {0,bb,0,0,0,0,0,0,bb,0,bb,0,0,0,0,0,0,0,0,0},    2000},
-  {"Neuron-B11",  1,   2.5,   12,     {0,0,bb,0,0,0,0,0,0,bb,0,bb,0,0,0,0,0,0,0,0},    2000},
-  {"Neuron-B12",  1,   2.5,   12,     {0,0,0,bb,0,0,0,0,0,0,bb,0,bb,0,0,0,0,0,0,0},    2000},
-  {"Neuron-B13",  1,   2.5,   12,     {0,0,0,0,bb,0,0,0,0,0,0,bb,0,bb,0,0,0,0,0,0},    2000},
-  {"Neuron-B14",  1,   2.5,   12,     {0,0,0,0,0,bb,0,0,0,0,0,0,bb,0,bb,0,0,0,0,0},    2000},
-  {"Neuron-B15",  1,   2.5,   12,     {0,0,0,0,0,0,bb,0,0,0,0,0,0,bb,0,bb,0,0,0,0},    2000},
-  {"Neuron-B16",  1,   2.5,   12,     {0,0,0,0,0,0,0,bb,0,0,0,0,0,0,bb,0,0,0,0,0},     2000},
-  // Limb neurons
-  {"Neuron-L17",  1,   2.5,   12,     {lb,lb,lb,lb,0,0,0,0,0,0,0,0,0,0,0,0,0,ll,ll,0}, 2000},
-  {"Neuron-L18",  1,   2.5,   12,     {0,0,0,0,0,0,0,0,lb,lb,lb,lb,0,0,0,0,ll,0,0,ll}, 2000},
-  {"Neuron-L19",  1,   2.5,   12,     {0,0,0,0,lb,lb,lb,lb,0,0,0,0,0,0,0,0,ll,0,0,ll}, 2000},
-  {"Neuron-L20",  1,   2.5,   12,     {0,0,0,0,0,0,0,0,0,0,0,0,lb,lb,lb,lb,0,ll,ll,0}, 2000},
+  /*Description    tao   b        T             a    */
+  {"First neuron",  1,   2.5,     6,     { 0,     0,    2.5}}, //TONIC: b=2.5, T=12
+  {"Second neuron", 1,   2.5,     6,     {2.5,    0,     0 }}, //TONIC: b=2.5, T=12
+  {"Third neuron",  1,   2.5,     6,     { 0,    2.5,    0 }}, //TONIC: b=2.5, T=12
+  // For the network confirguration where every neuron is connected to all other neurons, make all non-diagonal 'a' values non-zero (2.5)
 };
 
 /******************************************************/ 
@@ -209,17 +175,16 @@ void loop() {
   /* Read my program running time in milliseconds */
   myTime = millis();
 
-  for (int i = 0; i< NUMBER_MATSUOKA_NEURONS ; i++)
+  /* Introduce a perturbation to the system to start the oscillation */
+  if (myTime > start_simulation && myTime < start_simulation + 100)
   {
-    if (myTime > patterns[i].stimulation_time)
-    {
-      matsuoka_neuron[i].s_i = 1;
-    }
+    matsuoka_neuron[0].x_i = 0.01;
+    //matsuoka_neuron[1].x_i = 0.02;  // For the network confirguration where every neuron is connected to all other neurons, inject this current to second neuron
   }
 
   /* Update the neurons output*/
   update_locomotion_network();
-  
+
   /* Printing the output of the neurons on serial port*/
   for (int i = 0; i< NUMBER_MATSUOKA_NEURONS ; i++)
   {
@@ -231,4 +196,3 @@ void loop() {
   /* delay at the end */
   delay(mydelay);
 }
-

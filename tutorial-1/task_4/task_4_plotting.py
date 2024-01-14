@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 #%%
 # load data
-data = pd.read_csv('task5_data_swimming.txt')
+data = pd.read_csv(r'task_4_four_neurons/task_4_four_neurons_data.txt')
 
 #remove empty column
 data.drop(data.columns[-1], axis=1, inplace=True)
