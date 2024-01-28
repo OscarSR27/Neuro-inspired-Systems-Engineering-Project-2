@@ -7,7 +7,7 @@ import os
 
 #%%
 # load data
-filename = 'task_5_data_eight_coupling_no-perturbation.txt'
+filename = 'data_eight_mono_inhibition.txt'
 data = pd.read_csv(filename)
 
 # extract file name without file extension
@@ -33,7 +33,7 @@ for i, column in enumerate(data.columns):
 axes[n_rows-1][0].set_xlabel('Time [s]')
 axes[n_rows-1][1].set_xlabel('Time [s]')
 plt.tight_layout()
-plt.savefig(f'{description}.png')
+# plt.savefig(f'{description}.png')
 
 # Show the plot
 plt.show()
