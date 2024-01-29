@@ -1,6 +1,8 @@
 #include <DynamixelSDK.h>
 
-#define ADDR_AX_ID           3                 
+#define ADDR_AX_ID           3
+#define CW_ANGLE_LIMIT_MAX   6
+#define CCW_ANGLE_LIMIT_MAX  8                 
 
 #define ADDR_AX_TORQUE_ENABLE           24                 // Control table address is different in Dynamixel model
 #define ADDR_AX_GOAL_POSITION           30
@@ -91,6 +93,8 @@ String a;
   for(int id=0;id<=253;id++)
   {
   dxl_comm_result = packetHandler->write1ByteTxRx(portHandler, id, ADDR_AX_ID, dxl_new_id, &dxl_error);
+  dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, id, CW_ANGLE_LIMIT_MAX, 256/*150+75*/, &dxl_error);
+  dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, id, CCW_ANGLE_LIMIT_MAX, 768/*150-75*/, &dxl_error);
   delay(10);
   }
 }
