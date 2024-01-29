@@ -67,11 +67,11 @@ inline double der_theta (double theta_i, double theta_j[], double a[], double v 
   double sum = 0;
   for (int j = 0; j < NUMBER_PHASE_NEURONS; j++)
   {
-    for(int i = 0; i < NUMBER_PHASE_NEURONS; i++){
+    //for(int i = 0; i < NUMBER_PHASE_NEURONS; i++){
        //sum = sum + (a[j]*y_j[j]);
-       sum = sum + (a[j]* sin(theta_j[j]-theta_i- bias(N,NUMBER_PHASE_NEURONS))); //think how to get bias
+    sum = sum + (a[j]* sin(theta_j[j]-theta_i- bias(N,NUMBER_PHASE_NEURONS))); //think how to get bias
 
-    }
+    //}
     
   }
   return (double)((2*M_PI*v + sum)/tao); 
@@ -90,7 +90,7 @@ void update_phase_neuron(struct phaseNeuron* phase_n)
   //Initial conditions
   theta_i[0] = phase_n->theta_i;
 
-  for (int i = 0; i < n - 1; i++)
+  for (int i = 0; i < n; i++)
   {
       double der_theta_val = der_theta(theta_i[i], phase_n->theta_j, phase_n->a, phase_n->v, phase_n->tao);
       theta_i[i+1]= theta_i[i] + h * der_theta_val;

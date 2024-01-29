@@ -1,11 +1,11 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #define DESCRIPTION_LENGTH     15
-#define NUMBER_PHASE_NEURONS     4
+#define NUMBER_PHASE_NEURONS     7
 #define ARRAY_LENGTH(array) (sizeof(array) / sizeof((array)[0]))
 unsigned long int myTime;
 unsigned int mydelay = 10; // ms
-unsigned int start_simulation = 2000; // ms
+unsigned int start_simulation = 22000; // ms
 double N = 1;
 double N_new=1;
 /******************************************************/ 
@@ -47,10 +47,14 @@ struct Pattern{
 Pattern patterns[NUMBER_PHASE_NEURONS] = 
 {
   /*Description    tao   A                a    */
-  {"First neuron",  1,   1,            {0,1,0,0} }, //NO_ADAPTATION: b=0
-  {"Second neuron", 1,   1,            {1,0,1,0} }, //TONIC: b=2.5, T=12
-  {"Third neuron",  1,   1,            {0,0,0,1} },  //PHASIC: b large, T large
-  {"Fourth neuron",  1,   1,           {0,0,0,0} }  //PHASIC: b large, T large
+  {"First neuron",  1,   1,            {0,1,0,0,0,0,0} }, 
+  {"Second neuron", 1,   1,            {1,0,1,0,0,0,0} }, 
+  {"Third neuron",  1,   1,            {0,0,0,1,0,0,0} },  
+  {"Fourth neuron",  1,   1,           {0,0,0,0,1,0,0} },
+  {"Fifth neuron",  1,   1,            {0,0,0,0,0,1,0} }, 
+  {"Sixth neuron",  1,   1,            {0,0,0,0,0,0,1} }, 
+  {"Seventh neuron",  1,   1,          {0,0,0,0,0,0,0} }, 
+  
 };
 
 /******************************************************/ 
@@ -178,13 +182,14 @@ void loop() {
 
   for (int i = 0; i< NUMBER_PHASE_NEURONS ; i++)
   {
-    if (start_simulation + 10000 > myTime > start_simulation ) //if we get value from sensor
+    if ((start_simulation + 10000 > myTime) && (myTime > start_simulation) ) //if we get value from sensor
     {
+      
       N_new=2;
       double delta_T;
       delta_T =10000;
       phase_neuron[i].bias = bias_phase_transition(N, N_new, start_simulation, myTime, delta_T, &phase_neuron[i]);
-      N=N_new;
+      //N=N_new;
     }
     else{
       phase_neuron[i].bias = bias(N,NUMBER_PHASE_NEURONS);
