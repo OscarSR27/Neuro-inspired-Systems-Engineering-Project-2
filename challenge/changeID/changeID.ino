@@ -1,6 +1,8 @@
 #include <DynamixelSDK.h>
 
-#define ADDR_AX_ID           3                 
+#define ADDR_AX_ID           3
+#define CW_ANGLE_LIMIT_MAX   6
+#define CCW_ANGLE_LIMIT_MAX  8                 
 
 #define ADDR_AX_TORQUE_ENABLE           24                 // Control table address is different in Dynamixel model
 #define ADDR_AX_GOAL_POSITION           30
@@ -10,8 +12,10 @@
 // Protocol version
 #define PROTOCOL_VERSION                1.0                 // See which protocol version is used in the Dynamixel
 
+
 // Default setting
 #define DXL_ID                          1                   // Dynamixel ID: 1
+#define DXL_NEW_ID                      1                   // Dynamixel ID: 2
 
 
 #define BAUDRATE                        1000000
@@ -39,11 +43,21 @@ int dxl_comm_result = COMM_TX_FAIL;             // Communication result
 uint8_t dxl_error = 0;                          // Dynamixel error
 int16_t dxl_present_position = 0;               // Present position
 
+uint8_t dxl_new_id = DXL_NEW_ID; 
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(115200);
-  while(!Serial);
-  
+  while(!Serial.available());
+String a;
+  if(Serial.available())
+  {
+    a= Serial.readString();// read the incoming data as string
+    Serial.println(a); 
+    dxl_new_id = a.toInt();
+    delay(2000);
+  }
+
   // Initialize portHandler. Set the port path
   // Get methods and members of PortHandlerLinux or PortHandlerWindows
   portHandler = dynamixel::PortHandler::getPortHandler(DEVICENAME);
@@ -78,31 +92,20 @@ void setup() {
   // Change ID
   for(int id=0;id<=253;id++)
   {
-  packetHandler->write1ByteTxRx(portHandler, id, 3, DXL_ID, &dxl_error);delay(1);
-  packetHandler->write1ByteTxRx(portHandler, id, 4, 1, &dxl_error);delay(1);
-  packetHandler->write1ByteTxRx(portHandler, id, 5, 250, &dxl_error);delay(1);
-  packetHandler->write2ByteTxRx(portHandler, id, 6, 0, &dxl_error);delay(1);
-  packetHandler->write2ByteTxRx(portHandler, id, 8, 1023, &dxl_error);delay(1);
-  packetHandler->write1ByteTxRx(portHandler, id, 11, 70, &dxl_error);delay(1);
-  packetHandler->write1ByteTxRx(portHandler, id, 12, 60, &dxl_error);delay(1);
-  packetHandler->write1ByteTxRx(portHandler, id, 13, 140, &dxl_error);delay(1);
-  packetHandler->write2ByteTxRx(portHandler, id, 14, 1023, &dxl_error);delay(1);
-  packetHandler->write1ByteTxRx(portHandler, id, 16, 2, &dxl_error);delay(1);
-  packetHandler->write1ByteTxRx(portHandler, id, 17, 36, &dxl_error);delay(1);
-  packetHandler->write1ByteTxRx(portHandler, id, 18, 36, &dxl_error);delay(1);
-  Serial.print("ID : ");
-  Serial.println(id);
-  delay(1);
+  dxl_comm_result = packetHandler->write1ByteTxRx(portHandler, id, ADDR_AX_ID, dxl_new_id, &dxl_error);
+  dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, id, CW_ANGLE_LIMIT_MAX, 256/*150+75*/, &dxl_error);
+  dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, id, CCW_ANGLE_LIMIT_MAX, 768/*150-75*/, &dxl_error);
+  delay(10);
   }
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  packetHandler->read1ByteTxRx(portHandler, DXL_ID, MOVING, (uint8_t*)&isMoving, &dxl_error);
+  packetHandler->read1ByteTxRx(portHandler, dxl_new_id, MOVING, (uint8_t*)&isMoving, &dxl_error);
 
   if( isMoving == 0 ){ //if Dynamixel is stopped
     //Send instruction packet to move for goalPosition
-    dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, DXL_ID, ADDR_AX_GOAL_POSITION, goalPosition, &dxl_error);
+    dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_GOAL_POSITION, goalPosition, &dxl_error);
     //toggle the position if goalPosition is 1000, set to 0, if 0, set to 1000
     if(goalPosition == 700)
       goalPosition = 0;
@@ -110,11 +113,11 @@ void loop() {
       goalPosition = 700;
   }
   
-  packetHandler->read2ByteTxRx(portHandler, DXL_ID, ADDR_AX_PRESENT_POSITION, (uint16_t*)&dxl_present_position, &dxl_error);
+  packetHandler->read2ByteTxRx(portHandler, dxl_new_id, ADDR_AX_PRESENT_POSITION, (uint16_t*)&dxl_present_position, &dxl_error);
 
   
   Serial.print("ID : ");
-  Serial.print(DXL_ID);
+  Serial.print(dxl_new_id);
   Serial.print("\t Present Position : ");
   Serial.print(dxl_present_position);
   Serial.print("\n");
