@@ -12,7 +12,7 @@ unsigned long int myTime;
 unsigned int mydelay = 10; // ms
 unsigned int start_simulation = 22000; // ms
 double N = 1.5;
-double N_new=0.5;
+double N_new=1.5;
 
 #define ADDR_AX_ID           3                 
 #define ADDR_AX_TORQUE_ENABLE           24                 // Control table address is different in Dynamixel model
@@ -35,6 +35,12 @@ double N_new=0.5;
 
 #define ESC_ASCII_VALUE                 0x1b
 
+int analogValueA1_Baseline;
+int analogValueA2_Baseline;
+int analogValueA3_Baseline;
+int analogValueA4_Baseline;
+int analogValueA5_Baseline;
+int analogValueA6_Baseline;
 
 // Create PortHandler instance
 dynamixel::PortHandler *portHandler;
@@ -204,9 +210,24 @@ void update_locomotion_network(void)
 /* put your setup code in setup(), to run once */
 void setup()
 {
+  delay(2000);
   // put your setup code here, to run once:
   Serial.begin(115200);
-  while(!Serial.available());
+  //Declare pins as analog input
+  pinMode(1, INPUT);
+  pinMode(2, INPUT);
+  pinMode(3, INPUT);
+  pinMode(4, INPUT);
+  pinMode(5, INPUT);
+  pinMode(6, INPUT);
+
+  analogValueA1_Baseline = analogRead(1);
+  analogValueA2_Baseline = analogRead(2);
+  analogValueA3_Baseline = analogRead(3);
+  analogValueA4_Baseline = analogRead(4);
+  analogValueA5_Baseline = analogRead(5);
+  analogValueA6_Baseline = analogRead(6);
+ // while(!Serial.available());
   
   // Initialize portHandler. Set the port path
   // Get methods and members of PortHandlerLinux or PortHandlerWindows
@@ -250,14 +271,25 @@ void setup()
 
 
 /* put your main code here in loop(), to run repeatedly */
+int current_time = 0;
+bool trajectory_flag = false;
+int trajectory_offset = 511;
 void loop() {
 
   /* Read my program running time in milliseconds */
   /* Read my program running time in milliseconds */
-  myTime = millis();
+  int analogValueA1 = analogRead(1);
+  int analogValueA2 = analogRead(2);
+  int analogValueA3 = analogRead(3);
+  int analogValueA4 = analogRead(4);
+  int analogValueA5 = analogRead(5);
+  int analogValueA6 = analogRead(6);
 
+  
+  myTime = millis();
+  
   for (int i = 0; i< NUMBER_PHASE_NEURONS ; i++)
-  {
+  {/*
     if ((start_simulation + 2000 > myTime) && (myTime > start_simulation) && x_output(phase_neuron[0].theta_i, phase_neuron[0].A)) //if we get value from sensor
     {
       if(i == 0)
@@ -265,7 +297,7 @@ void loop() {
         Serial.print("START : ");
         Serial.print(x_output(phase_neuron[0].theta_i, phase_neuron[0].A));
       }
-      //N_new=1;
+      N_new=0.5;
       double delta_T;
       delta_T =2000;
       double old_bias=bias(N,NUMBER_PHASE_NEURONS);
@@ -276,10 +308,10 @@ void loop() {
     }
     else{
       //phase_neuron[i].v = 6;
+      N=N_new;
       phase_neuron[i].bias = bias(N,NUMBER_PHASE_NEURONS);
-
-
-    }
+    }*/
+    phase_neuron[i].bias = bias(N,NUMBER_PHASE_NEURONS);
   }
 
   /* Update the neurons output*/
@@ -288,19 +320,39 @@ void loop() {
   for(int i=0; i<NUMBER_PHASE_NEURONS; i++)
   {
     uint8_t motor_id = NUMBER_PHASE_NEURONS - i;
-    goal_position[i] = 100*x_output(phase_neuron[i].theta_i, phase_neuron[i].A) + 500;
+    //uint8_t motor_id = i;
+    if ((analogValueA1 > analogValueA1_Baseline + 20 || analogValueA1 < analogValueA1_Baseline - 20))
+    {
+      trajectory_offset = 561;
+      current_time = myTime;
+      trajectory_flag = true;
+    }
+
+    if ((analogValueA2 > analogValueA2_Baseline + 20 || analogValueA2 < analogValueA2_Baseline - 20))
+    {
+      trajectory_offset = 449;
+      current_time = myTime;
+      trajectory_flag = true;
+    }
+
+    if (myTime >  current_time + 5000)
+    {
+      trajectory_flag = false;
+      trajectory_offset = 511;
+    }
+    goal_position[i] = 100*x_output(phase_neuron[i].theta_i, phase_neuron[i].A) + trajectory_offset;
 
     dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, motor_id, ADDR_AX_GOAL_POSITION, goal_position[i], &dxl_error);delay(1);
   
     packetHandler->read2ByteTxRx(portHandler, motor_id, ADDR_AX_PRESENT_POSITION, (uint16_t*)&dxl_present_position, &dxl_error);
-/*
+
     Serial.print("ID : ");
     Serial.print(motor_id);
     Serial.print("\t Present Position : ");
     Serial.print(dxl_present_position);
     Serial.print("\t Goal Position : ");
     Serial.print(goal_position[i]);
-    Serial.print("\n");*/
+    Serial.print("\n");
   }
 
   /* delay at the end */
