@@ -35,13 +35,6 @@ double N_new=1.5;
 
 #define ESC_ASCII_VALUE                 0x1b
 
-int analogValueA1_Baseline;
-int analogValueA2_Baseline;
-int analogValueA3_Baseline;
-int analogValueA4_Baseline;
-int analogValueA5_Baseline;
-int analogValueA6_Baseline;
-
 // Create PortHandler instance
 dynamixel::PortHandler *portHandler;
 
@@ -49,10 +42,24 @@ dynamixel::PortHandler *portHandler;
 dynamixel::PacketHandler *packetHandler;
 
 //***********Set Global Variables****************
+// Motor
 uint16_t goal_position[NUMBER_PHASE_NEURONS];
 int dxl_comm_result = COMM_TX_FAIL;             // Communication result
 uint8_t dxl_error = 0;                          // Dynamixel error
 int16_t dxl_present_position = 0;               // Present position
+
+// Sensors
+int analogValueA1_Baseline;
+int analogValueA2_Baseline;
+int analogValueA3_Baseline;
+int analogValueA4_Baseline;
+int analogValueA5_Baseline;
+int analogValueA6_Baseline;
+
+// Control Logic
+int current_time = 0;
+bool trajectory_flag = false;
+int trajectory_offset = 511;
 
 /******************************************************/ 
 /*  
@@ -67,13 +74,12 @@ int16_t dxl_present_position = 0;               // Present position
 struct phaseNeuron { 
    char description[DESCRIPTION_LENGTH]; // name
    double tao = 0;
-   double A = 0.1; //0.2 or 0.1
+   double A = 1;
    double theta_j[NUMBER_PHASE_NEURONS];
-   double x_j[NUMBER_PHASE_NEURONS];
    double bias = 0;
-   double v = 5; //intrinsic frequency
-   double a[NUMBER_PHASE_NEURONS];
-   double C[NUMBER_PHASE_NEURONS];
+   double v = 0.8; //intrinsic frequency
+   double a[NUMBER_PHASE_NEURONS]; // weights
+   double C[NUMBER_PHASE_NEURONS]; // sign of bias
    double theta_i = 0; //output
 } phase_neuron[NUMBER_PHASE_NEURONS]; 
 /******************************************************/
@@ -93,16 +99,18 @@ struct Pattern{
 
 // Ensure that the number of entries in the patterns array matches the number of neurons.
 // Ensure that the number of entries in the 'a' array matches the number of neurons.
+double w = 10;
+double tau_g = 0.07; // global tau value
 Pattern patterns[NUMBER_PHASE_NEURONS] = 
 {
-  /*Description    tao   A                a            C*/
-  {"First neuron",  1,   1,            {0,10,0,0,0,0,0},  {0,1,0,0,0,0,0} },
-  {"Second neuron", 1,   1,            {10,0,10,0,0,0,0}, {-1,0,1,0,0,0,0}}, 
-  {"Third neuron",  1,   1,            {0,0,0,10,0,0,0},  {0,0,0,1,0,0,0} },  
-  {"Fourth neuron",  1,   1,           {0,0,0,0,10,0,0},  {0,0,0,0,1,0,0} },
-  {"Fifth neuron",  1,   1,            {0,0,0,0,0,10,0},  {0,0,0,0,0,1,0} }, 
-  {"Sixth neuron",  1,   1,            {0,0,0,0,0,0,10},  {0,0,0,0,0,0,1} }, 
-  {"Seventh neuron",  1,   1,          {0,0,0,0,0,0,0},   {0,0,0,0,0,0,0} }, 
+  /*Description    tao   A            a                  C          */
+  {"First neuron",   tau_g,   1,   {0,w,0,0,0,0,0},  {0,-1,0,0,0,0,0} },
+  {"Second neuron",  tau_g,   1,   {w,0,0,0,0,0,0},  {1,0,0,0,0,0,0}  }, 
+  {"Third neuron",   tau_g,   1,   {0,w,0,0,0,0,0},  {0,1,0,0,0,0,0}  },  
+  {"Fourth neuron",  tau_g,   1,   {0,0,w,0,0,0,0},  {0,0,1,0,0,0,0}  },
+  {"Fifth neuron",   tau_g,   1,   {0,0,0,w,0,0,0},  {0,0,0,1,0,0,0}  }, 
+  {"Sixth neuron",   tau_g,   1,   {0,0,0,0,w,0,0},  {0,0,0,0,1,0,0}  }, 
+  {"Seventh neuron", tau_g,   1,   {0,0,0,0,0,w,0},  {0,0,0,0,0,1,0}  }, 
   
 };
 
@@ -157,7 +165,7 @@ void update_phase_neuron(struct phaseNeuron* phase_n)
 
   phase_n->theta_i = theta_i[n-1];
 
-    return;
+  return;
 }
 /******************************************************/ 
 void setup_phase_neuron(struct phaseNeuron *phase_n,struct Pattern myP, String str)
@@ -271,9 +279,6 @@ void setup()
 
 
 /* put your main code here in loop(), to run repeatedly */
-int current_time = 0;
-bool trajectory_flag = false;
-int trajectory_offset = 511;
 void loop() {
 
   /* Read my program running time in milliseconds */
@@ -319,11 +324,12 @@ void loop() {
 
   for(int i=0; i<NUMBER_PHASE_NEURONS; i++)
   {
-    uint8_t motor_id = NUMBER_PHASE_NEURONS - i;
-    //uint8_t motor_id = i;
+    //uint8_t motor_id = NUMBER_PHASE_NEURONS - i;
+    uint8_t motor_id = i+1;
     if ((analogValueA1 > analogValueA1_Baseline + 20 || analogValueA1 < analogValueA1_Baseline - 20))
     {
       trajectory_offset = 561;
+      phase_neuron[i].tao = 0.5;
       current_time = myTime;
       trajectory_flag = true;
     }
@@ -331,6 +337,7 @@ void loop() {
     if ((analogValueA2 > analogValueA2_Baseline + 20 || analogValueA2 < analogValueA2_Baseline - 20))
     {
       trajectory_offset = 449;
+      phase_neuron[i].tao = 0.2;
       current_time = myTime;
       trajectory_flag = true;
     }
@@ -339,6 +346,7 @@ void loop() {
     {
       trajectory_flag = false;
       trajectory_offset = 511;
+      phase_neuron[i].tao = tau_g;
     }
     goal_position[i] = 100*x_output(phase_neuron[i].theta_i, phase_neuron[i].A) + trajectory_offset;
 
