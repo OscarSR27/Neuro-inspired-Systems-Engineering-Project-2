@@ -8,6 +8,17 @@
 #define DESCRIPTION_LENGTH     15
 #define NUMBER_PHASE_NEURONS     7
 #define ARRAY_LENGTH(array) (sizeof(array) / sizeof((array)[0]))
+unsigned long int myTime;
+unsigned int mydelay = 10; // ms
+unsigned int start_simulation = 22000; // ms
+double N = 1;
+double N_new=2;
+float delta_t_transition_phase=2000;
+float delta_t_amplitude=7000;
+float delta_t_rotation=1000;
+int current_time_rotation = 0;
+int current_time_amplitude = 0;
+
 #define ADDR_AX_ID           3                 
 #define ADDR_AX_TORQUE_ENABLE           24                 // Control table address is different in Dynamixel model
 #define ADDR_AX_GOAL_POSITION           30
@@ -43,53 +54,17 @@ uint8_t dxl_error = 0;                          // Dynamixel error
 int16_t dxl_present_position = 0;               // Present position
 
 // Sensors
-int const number_readings = 2;
 int analogValueA1_Baseline;
 int analogValueA2_Baseline;
 int analogValueA3_Baseline;
 int analogValueA4_Baseline;
 int analogValueA5_Baseline;
 int analogValueA6_Baseline;
-int analogValueA1[number_readings];
-int analogValueA2[number_readings];
-int analogValueA3[number_readings];
-int analogValueA4[number_readings];
-int analogValueA5[number_readings];
-int analogValueA6[number_readings];
-int A1_counter = 0;
-int A2_counter = 0;
-int A3_counter = 0;
-int A4_counter = 0;
-int A5_counter = 0;
-int A6_counter = 0;
-
-bool A1_stable_reading = false;
-bool A2_stable_reading = false;
-bool A3_stable_reading = false;
-bool A4_stable_reading = false;
-bool A5_stable_reading = false;
-bool A6_stable_reading = false;
 
 // Control Logic
-int trajectory_offset = 511;
+int current_time = 0;
 bool amplitude_flag = false;
-unsigned long int myTime;
-unsigned int mydelay = 10; // ms
-unsigned int start_simulation = 22000; // ms
-int current_time_rotation = 0;
-int current_time_amplitude = 0;
-int rigth_counter = 0;
-int left_counter = 0;
-float delta_t_amplitude=5000;
-float delta_t_rotation=2500;
-int const sensitivity_1 = 15;
-int const sensitivity_2 = 25;
-
-//Pattern
-double w = 10;
-double tau_g = 0.2; // global tau value
-double N = 1;
-double N_new=2;
+int trajectory_offset = 511;
 
 /******************************************************/ 
 /*  
@@ -129,6 +104,8 @@ struct Pattern{
 
 // Ensure that the number of entries in the patterns array matches the number of neurons.
 // Ensure that the number of entries in the 'a' array matches the number of neurons.
+double w = 10;
+double tau_g = 0.07; // global tau value
 Pattern patterns[NUMBER_PHASE_NEURONS] = 
 {
   /*Description    tao   A            a                  C          */
@@ -142,7 +119,6 @@ Pattern patterns[NUMBER_PHASE_NEURONS] =
   
 };
 
-bool read_flex_sensor(int *sensor_readings_array, int array_length, int &sensor_readings_index, int sensor_input, int baseline_value, int sensitivity);
 /******************************************************/
 //inline double bias_phase_transition(double N, double N_new, double t1=0, double t_cur=0, double delta_T=1000 ,struct phaseNeuron* phase_n = &phase_neuron[0]){
 inline double bias_phase_transition(double N, double N_new, double t1=0, double t_cur=0, double delta_T=1000 , double old_bias=1){
@@ -150,6 +126,9 @@ inline double bias_phase_transition(double N, double N_new, double t1=0, double 
   double alpha;
     alpha=old_bias*(N_new/N)*(1-(N/N_new))/delta_T;
     phase_bias=old_bias-alpha*(t1-t_cur);
+
+  Serial.print("transition phase: ");
+  Serial.println(phase_bias);
   
   return phase_bias;
 }
@@ -157,6 +136,9 @@ inline double bias_phase_transition(double N, double N_new, double t1=0, double 
 inline double bias(double N, double neuron_number = NUMBER_PHASE_NEURONS){
   double phase_bias;
   phase_bias = 2*M_PI*N/neuron_number;
+
+    Serial.print("normal phase: ");
+  Serial.println(phase_bias);
   
   return phase_bias;
 }
@@ -247,7 +229,6 @@ void update_locomotion_network(void)
 /* put your setup code in setup(), to run once */
 void setup()
 {
-  delay(2000);
   // put your setup code here, to run once:
   Serial.begin(115200);
   //Declare pins as analog input
@@ -308,7 +289,6 @@ void setup()
 
 
 /* put your main code here in loop(), to run repeatedly */
-
 void loop() {
 /*
     for (int i = 0; i< NUMBER_PHASE_NEURONS ; i++)
@@ -337,12 +317,15 @@ void loop() {
     phase_neuron[i].bias = bias(N,NUMBER_PHASE_NEURONS);
   }*/
 
-  A1_stable_reading = read_flex_sensor(analogValueA1, ARRAY_LENGTH(analogValueA1), A1_counter, analogRead(1), analogValueA1_Baseline, sensitivity_1);
-  A2_stable_reading = read_flex_sensor(analogValueA2, ARRAY_LENGTH(analogValueA2), A2_counter, analogRead(2), analogValueA2_Baseline, sensitivity_1);
-  A3_stable_reading = read_flex_sensor(analogValueA3, ARRAY_LENGTH(analogValueA3), A3_counter, analogRead(3), analogValueA3_Baseline, sensitivity_2);
-  A4_stable_reading = read_flex_sensor(analogValueA4, ARRAY_LENGTH(analogValueA4), A4_counter, analogRead(4), analogValueA4_Baseline, sensitivity_2);
-  A5_stable_reading = read_flex_sensor(analogValueA5, ARRAY_LENGTH(analogValueA5), A5_counter, analogRead(5), analogValueA5_Baseline, sensitivity_2);
-  A6_stable_reading = read_flex_sensor(analogValueA6, ARRAY_LENGTH(analogValueA6), A6_counter, analogRead(6), analogValueA6_Baseline, sensitivity_2);
+  /* Read my program running time in milliseconds */
+  /* Read my program running time in milliseconds */
+  int analogValueA1 = analogRead(1);
+  int analogValueA2 = analogRead(2);
+  int analogValueA3 = analogRead(3);
+  int analogValueA4 = analogRead(4);
+  int analogValueA5 = analogRead(5);
+  int analogValueA6 = analogRead(6);
+  
 
   
   myTime = millis();
@@ -353,49 +336,32 @@ void loop() {
 
   for(int i=0; i<NUMBER_PHASE_NEURONS; i++)
   {
-    phase_neuron[i].bias = bias(N,NUMBER_PHASE_NEURONS);
     //uint8_t motor_id = NUMBER_PHASE_NEURONS - i;
     uint8_t motor_id = i+1;
-    if (A1_stable_reading)
+    if ((analogValueA1 > analogValueA1_Baseline + 50 || analogValueA1 < analogValueA1_Baseline - 50))
     {
-      Serial.print("trajectory_offset: ");
-      Serial.println(trajectory_offset);
-      Serial.print("rigth_counter: ");
-      Serial.println(rigth_counter);
-      trajectory_offset = 522 + rigth_counter;
+      trajectory_offset = 532;
+      //phase_neuron[i].tao = 0.5;
       current_time_rotation = myTime;
-      if (rigth_counter < 50)
-      {
-        rigth_counter++;
-      }
     }
 
-    if (A2_stable_reading)
+    if ((analogValueA2 > analogValueA2_Baseline + 50 || analogValueA2 < analogValueA2_Baseline - 50))
     {
-      Serial.print("trajectory_offset: ");
-      Serial.println(trajectory_offset);
-      Serial.print("left_counter: ");
-      Serial.println(left_counter);
-      trajectory_offset = 502 - left_counter;
+      trajectory_offset = 492;
+      //phase_neuron[i].tao = 0.2;
       current_time_rotation = myTime;
-      if (left_counter < 50)
-      {
-        left_counter++;
-      }
     }
 
-    if (A5_stable_reading)
+    if ((analogValueA3 > analogValueA3_Baseline + 50 || analogValueA3 < analogValueA3_Baseline - 50))
     {
-      Serial.print("analogValueA5: ");
-      Serial.println(analogRead(5));
+      Serial.println("analogValueA4");
       current_time_amplitude = myTime;
       amplitude_flag = true;
     }
-
-    if (A6_stable_reading)
+    
+    if ((analogValueA4 > analogValueA4_Baseline + 50 || analogValueA4 < analogValueA4_Baseline - 50))
     {
-      Serial.print("analogValueA6: ");
-      Serial.println(analogRead(6));
+      Serial.println("analogValueA4");
       current_time_amplitude = myTime;
       amplitude_flag = true;
     }
@@ -405,31 +371,27 @@ void loop() {
       //trajectory_flag = false;
       trajectory_offset = 511;
       phase_neuron[i].tao = tau_g;
-      rigth_counter = 0;
-      left_counter = 0;
     }
 
+
     if (myTime >  current_time_amplitude + delta_t_amplitude)
+
     {
-      //phase_neuron[i].bias = bias(N,NUMBER_PHASE_NEURONS);
-      phase_neuron[i].A = 120;
-      phase_neuron[i].tao = tau_g;
+      Serial.println("Reset Phase");
+      phase_neuron[i].bias = bias(N,NUMBER_PHASE_NEURONS);
       amplitude_flag = false;
     }
     if (amplitude_flag)
     {
-      phase_neuron[i].A = 60;
-      phase_neuron[i].tao = 0.08;
+      Serial.println("New Phase");
       double old_bias=bias(N,NUMBER_PHASE_NEURONS);
-      //phase_neuron[i].bias = bias_phase_transition(N, 2, current_time_amplitude, myTime, delta_t_amplitude, old_bias);
+      phase_neuron[i].bias = bias_phase_transition(N, N_new, current_time_amplitude, myTime, delta_t_transition_phase, old_bias);
     }
+    
     goal_position[i] = x_output(phase_neuron[i].theta_i, phase_neuron[i].A) + trajectory_offset;
-
-    if(myTime > 5000)
-    {
-      dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, motor_id, ADDR_AX_GOAL_POSITION, goal_position[i], &dxl_error);
-    }
-    delay(1);
+    
+    dxl_comm_result = packetHandler->write2ByteTxRx(portHandler, motor_id, ADDR_AX_GOAL_POSITION, goal_position[i], &dxl_error);delay(1);
+  
     packetHandler->read2ByteTxRx(portHandler, motor_id, ADDR_AX_PRESENT_POSITION, (uint16_t*)&dxl_present_position, &dxl_error);
 /*
     Serial.print("ID : ");
@@ -443,32 +405,4 @@ void loop() {
 
   /* delay at the end */
   delay(mydelay);
-}
-
-bool read_flex_sensor(int *sensor_readings_array, int array_length, int &sensor_readings_index, int sensor_input, int baseline_value, int sensitivity)
-{
-  bool stable_value = true;
-  sensor_readings_array[sensor_readings_index] = sensor_input;
-  for (int i=0; i < array_length; i++)
-  {
-    if((sensor_readings_array[i] > baseline_value + sensitivity) || (sensor_readings_array[i] < baseline_value - sensitivity))
-    {
-      stable_value = stable_value & true;
-    }
-    else
-    {
-      stable_value = false;
-    }
-  }
-
-  if (sensor_readings_index == array_length - 1)
-  {
-    sensor_readings_index = 0;
-  }
-  else
-  {
-    sensor_readings_index++;
-  }
-
-  return stable_value;
 }
