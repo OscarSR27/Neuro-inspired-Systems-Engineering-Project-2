@@ -1,0 +1,10 @@
+distance: 1.5m
+
+parameters: w=10, bias=2pi/7, A=120, tau=0.2, v=0.8 (default straight movement)
+measurements: 13.4s, 13.11s, 13.3s
+
+parameters: w=10, bias=2pi/7, A=60, tau=0.08, v=0.8 (narrow straight movement)
+measurements: 11.76s, 13.00s, 11.59s
+
+parameters: w=10, bias=2pi/7, A=120, tau=0.2, v=0.1 (influence of v)
+measurements: 104.42s, 127.69s
