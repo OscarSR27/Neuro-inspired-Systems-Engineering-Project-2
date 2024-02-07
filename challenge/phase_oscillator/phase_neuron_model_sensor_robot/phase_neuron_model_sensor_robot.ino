@@ -75,7 +75,7 @@ int trajectory_offset = 511;
 bool amplitude_flag = false;
 unsigned long int myTime;
 unsigned int mydelay = 10; // ms
-unsigned int start_simulation = 22000; // ms
+//unsigned int start_simulation = 22000; // ms
 int current_time_rotation = 0;
 int current_time_amplitude = 0;
 int rigth_counter = 0;
@@ -121,7 +121,7 @@ struct phaseNeuron {
 struct Pattern{
   String str;
   double a[NUMBER_PHASE_NEURONS];
-  double C[NUMBER_PHASE_NEURONS]; //connectivity matrix phase bias
+  double C[NUMBER_PHASE_NEURONS];
   };
 /******************************************************/ 
 //Parameter Configuration: Use the following array to define the settings for each neuron.
@@ -193,11 +193,6 @@ void setup_phase_neuron(struct phaseNeuron *phase_n,struct Pattern myP, String s
   {
     phase_n->description[i] = str[i]; 
   }
-  
-  //phase_n->tao = myP.tao;
-  //phase_n->A = myP.A;
- 
-  
 
   //Initialize a array and y_j array
   for (int i = 0; i < NUMBER_PHASE_NEURONS; i++)
