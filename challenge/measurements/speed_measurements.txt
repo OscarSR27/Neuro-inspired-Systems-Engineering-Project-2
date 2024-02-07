@@ -1,10 +1,23 @@
 distance: 1.5m
 
-parameters: w=10, bias=2pi/7, A=120, tau=0.2, v=0.8 (default straight movement)
+parameters: w=10, bias=2pi/7, A=1, tau=0.2, v=0.1 (settings used in paper)
+measurements: not moving
+
+parameters: w=10, bias=2pi/7, A=120, tau=0.2, v=0.1 (default movement, very slow)
+measurements: 104.42s, 127.69s, 115.29s
+
+parameters: w=10, bias=2pi/7, A=120, tau=0.08, v=0.1 (default movement, slow)
+measurements: 55.47s, 57.37s, 57.71s
+
+parameters: w=10, bias=2pi/7, A=120, tau=0.08, v=0.8 (default movement, speeding violently)
+measurements: 6.75s, 6.38s, 6.30s
+
+parameters: w=10, bias=2pi/7, A=120, tau=0.2, v=0.8 (default movement, final parameter choice)
 measurements: 13.4s, 13.11s, 13.3s
 
-parameters: w=10, bias=2pi/7, A=60, tau=0.08, v=0.8 (narrow straight movement)
+parameters: w=10, bias=2pi/7, A=60, tau=0.2, v=0.8 (narrow movement, slow)
+measurements: 25.88s, 30.02s, 27.33s
+
+parameters: w=10, bias=2pi/7, A=60, tau=0.08, v=0.8 (narrow movement, final parameter choice)
 measurements: 11.76s, 13.00s, 11.59s
 
-parameters: w=10, bias=2pi/7, A=120, tau=0.2, v=0.1 (influence of v)
-measurements: 104.42s, 127.69s

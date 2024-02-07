@@ -87,7 +87,7 @@ int const sensitivity_2 = 25;
 //Pattern
 double w = 10;
 double default_amp = 120; // amplitude standard movement
-double default_tau = 0.2; // tau standard movement
+double default_tau = 0.08; // tau standard movement
 double narrow_amp = 60;   // amplitude narrow movement, not used in experiments
 double narrow_tau = 0.08; // tau narrow movement, not used in experiments
 double N = 1;
@@ -108,7 +108,7 @@ struct phaseNeuron {
    double A = default_amp;
    double theta_j[NUMBER_PHASE_NEURONS];
    double bias = 0;
-   double v = 0.8; //intrinsic frequency
+   double v = 0.1; //intrinsic frequency
    double a[NUMBER_PHASE_NEURONS]; // weights
    double C[NUMBER_PHASE_NEURONS]; // sign of bias
    double theta_i = 0; //output
