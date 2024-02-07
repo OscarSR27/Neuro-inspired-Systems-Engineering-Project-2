@@ -75,7 +75,6 @@ int trajectory_offset = 511;
 bool amplitude_flag = false;
 unsigned long int myTime;
 unsigned int mydelay = 10; // ms
-//unsigned int start_simulation = 22000; // ms
 int current_time_rotation = 0;
 int current_time_amplitude = 0;
 int rigth_counter = 0;
