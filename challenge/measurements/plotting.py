@@ -7,7 +7,7 @@ import os
 
 #%%
 # load data
-filename = 'ROM_reduced_amp_01.txt'
+filename = '07_ROM_reduced_amp.txt'
 data = pd.read_csv(filename)
 
 # extract file name without file extension
@@ -41,7 +41,7 @@ plt.show()
 
 #%%
 # plotting goal positions travelling waves
-font_size = 50
+font_size = 70
 
 fig, axes = plt.subplots(goal_positions.shape[1], figsize=(50, 25), sharex=True)
 for i in range(goal_positions.shape[1]):
@@ -50,7 +50,7 @@ for i in range(goal_positions.shape[1]):
     axes[i].set_xlim(0,10000)
     axes[i].tick_params(axis='y', labelsize=font_size)
     #axes[i].set_ylim(0,1023)
-    axes[i].set_ylabel('Motor '+str(i+1),fontsize=font_size)
+    axes[i].set_ylabel('M '+str(i+1),fontsize=font_size)
 axes[-1].set_xlabel('Time [ms]', fontsize=font_size)
 axes[-1].tick_params(axis='both', labelsize=font_size)
 axes[-1].set_xlim(0,10000)
@@ -63,8 +63,8 @@ plt.show()
 
 #%%
 # plot range of motion for 1 motor
-font_size = 24
-id = 0
+font_size = 40
+id = 3
 
 fig, ax = plt.subplots(1, figsize=(20,10))
 ax.plot(data.timestamp[data.timestamp > start_buffer] - start_buffer, goal_positions[data.timestamp > start_buffer].iloc[:,id], label='goal position')
