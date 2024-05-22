@@ -1,5 +1,28 @@
 # NISE block 2
+## Notice: Large Files Managed by Git LFS
 
+This repository contains large files that are managed by Git Large File Storage (LFS). To ensure you can access and work with these files, please follow the steps below to install Git LFS and clone the repository correctly.
+
+### Steps to Clone the Repository with Git LFS
+
+1. **Install Git LFS**:
+   - **On Debian/Ubuntu**:
+     ```sh
+     sudo apt-get install git-lfs
+     ```
+   - **On macOS using Homebrew**:
+     ```sh
+     brew install git-lfs
+     ```
+   - **On Windows**:
+     Download and install Git LFS from [Git LFS Releases](https://github.com/git-lfs/git-lfs/releases).
+
+2. **Initialize Git LFS** (only needed once per repository):
+   ```sh
+   git lfs install
+   git clone https://github.com/YourUsername/YourRepository.git
+   cd YourRepository
+   git lfs pull
 
 
 ## Getting started
